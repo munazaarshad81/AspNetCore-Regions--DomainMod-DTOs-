@@ -9,59 +9,70 @@ using NZWalksAPI.Models.Domains;
 using NZWalksAPI.Models.DTOs;
 using NZWalksAPI.Repositories;
 using System.Collections.Generic;
+using System.Text.Json;
 
 namespace NZWalksAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize] // This will make sure that all the endpoints in this controller are protected and only accessible to authenticated users.
+     // [Authorize] // This will make sure that all the endpoints in this controller are protected and only accessible to authenticated users.
     public class RegionsController : ControllerBase
     {
         private NZWalksDbContext dbContext;
         private IRegionRepository regionRepository;
         private readonly IMapper mapper;
+        private readonly ILogger<RegionsController> logger1;
 
-        public RegionsController(NZWalksDbContext dbContext, IRegionRepository regionRepository, IMapper mapper)
+        public RegionsController(NZWalksDbContext dbContext, IRegionRepository regionRepository, IMapper mapper, ILogger<RegionsController> logger1)
         {
             this.dbContext = dbContext;
             this.regionRepository = regionRepository;
             this.mapper = mapper;
+            this.logger1 = logger1;
         }
         [HttpGet]
+        //[Authorize(Roles = "Reader")] // This will make sure that only users with the "reader" role can access this endpoint.
         //GET ALL REGIONS
         //Get: https://localhost:portnumber/api/regions
         public async Task<IActionResult> GetAll() // Implementing Async programming
         {
-
+              
             //1- Get Region Domain Model From Database
-            var RegionsDomain = await regionRepository.GetAllAsync();
+            logger1.LogInformation("GetAll Method in RegionsController started");
+                var RegionsDomain = await regionRepository.GetAllAsync();
 
-            ////2- Convert Domain to DTO
-            //var regionDto = new List<Regiondto>();
-            //foreach (var region in RegionsDomain)
-            //{
-            //    regionDto.Add(new Regiondto()
-            //    {
-            //        Id = region.Id,
-            //        Name = region.Name,
-            //        Code = region.Code,
-            //        RegionImageUrl = region.RegionImageUrl
-            //    });
-            //}
-            // This line will Map Domain Model to Dto, and even from Dto to the client
-            return Ok(mapper.Map<List<Regiondto>>(RegionsDomain));
+                // Return Dtos
+                logger1.LogInformation($"Finished GetAll Regions request with data:{JsonSerializer.Serialize(RegionsDomain)}");
 
 
-
-        }
+                
+                ////2- Convert Domain to DTO
+                //var regionDto = new List<Regiondto>();
+                //foreach (var region in RegionsDomain)
+                //{
+                //    regionDto.Add(new Regiondto()
+                //    {
+                //        Id = region.Id,
+                //        Name = region.Name,
+                //        Code = region.Code,
+                //        RegionImageUrl = region.RegionImageUrl
+                //    });
+                //}
+                // This line will Map Domain Model to Dto, and even from Dto to the client
+                return Ok(mapper.Map<List<Regiondto>>(RegionsDomain));
+            }
+          
+        
         //GET SINGLE REGION (Get Region By Id)
         // Get: https://localhost:portnumber/api/regions/{id}
         // 1- Get Region Domain Model From Database
         [HttpGet]
-        [Route("id:Guid")]
+        //[Authorize(Roles = "Reader")] // This will make sure that only users with the "reader" role can access this endpoint.
+        [Route("{id:Guid}")]
 
         public async Task<IActionResult> GetById(Guid id)
         {
+
             // var region =dbContext.Regions.FirstOrDefault(x => x.Id == id);
             // var region = dbContext.Regions.Find(id);
             var regionsDomain = await dbContext.Regions.FindAsync(id);
@@ -86,6 +97,7 @@ namespace NZWalksAPI.Controllers
         }
         // POST - Client can Add a new region into the DB
         [HttpPost]
+        //[Authorize (Roles = "Writer")] // This will make sure that only users with the "writer" role can access this endpoint.
         [ValidateModel]
         public async Task<IActionResult> Create([FromBody] AddRegionRequestDto addRegionRequestDto)
         {
@@ -116,6 +128,7 @@ namespace NZWalksAPI.Controllers
         [HttpPut]
         [Route("{id:Guid}")]
         [ValidateModel]
+        //[Authorize (Roles = "Writer")] // This will make sure that only users with the "writer" role can access this endpoint.
 
         public async Task<IActionResult> Update([FromRoute] Guid id, [FromBody] UpdateRegionRequestDto updateRegionRequestDto)
         {    //map domain model to DTO
@@ -154,6 +167,7 @@ namespace NZWalksAPI.Controllers
 
         [HttpDelete]
         [Route ("{id:guid}")]
+        //[Authorize(Roles = "Writer,Reader")]
 
         public async Task<IActionResult> delete([FromRoute] Guid id)
         {

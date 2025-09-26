@@ -25,6 +25,7 @@ namespace NZWalksAPI.Controllers
         [ValidateModel]
         public async Task<IActionResult> CreateAsync([FromBody] AddWalkRequestDto addWalkRequestDto)
         {
+            
             // Mapping DTO to Domain model
             var walkDomainModel = mapper.Map<Models.Domains.Walk>(addWalkRequestDto);
 
@@ -43,6 +44,7 @@ namespace NZWalksAPI.Controllers
                 // Get Domain model from database
                 var walksDomainModel = await walkRepository.GetAllAsync(filterOn,filterQuery, sortBy, isAscending ?? true, pageNumber , pageSize);
 
+                throw new Exception("This is a new exception for testing purpose");
                 // Mapping Domain model to DTO
                 return Ok(mapper.Map<List<WalkDto>>(walksDomainModel));
             }
